@@ -50,6 +50,10 @@ exports.joinGame = async (req, res) => {
       gameId
     });
 
+    if(existingPlayers.length === 0){
+      game.ownerId = newPlayer._id;
+    }
+
     // Update playerOrder in Game
     game.playerOrder.push(newPlayer._id);
     await game.save();
@@ -57,11 +61,45 @@ exports.joinGame = async (req, res) => {
     return res.status(200).json({
       message: 'Joined game successfully',
       playerId: newPlayer._id,
-      gameId: game._id
+      gameId: game._id,
+      gameOwner : game.ownerId
     });
 
   } catch (err) {
     console.error('Error in joinGame:', err);
     return res.status(500).json({ error: 'Server error while joining game' });
   }
+};
+
+exports.startGame = async (req, res) => {
+  const { gameId, playerId } = req.body;
+
+  const game = await Game.findById(gameId);
+  if (!game || game.status !== 'waiting') return res.status(400).json({ error: 'Game not found or already started' });
+
+  if (!game.ownerId.equals(playerId)) return res.status(403).json({ error: 'Only game owner can start' });
+
+  const players = await Player.find({ gameId });
+  if (players.length < 2) return res.status(400).json({ error: 'Need at least 2 players to start' });
+
+  // Utility function to shuffle an array
+  const shuffleArray = (array) => {
+      for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+  };
+
+  // Apply shuffle before assigning playerOrder
+  const playerIds = players.map(p => p._id);
+  const shuffledPlayerOrder = shuffleArray([...playerIds]);
+
+  game.status = 'active';
+  game.playerOrder = shuffledPlayerOrder;
+  game.currentTurnPlayerId = shuffledPlayerOrder[0];
+  game.startTime = new Date();
+  await game.save();
+
+  res.json({ message: 'Game started', currentTurnPlayerId: game.currentTurnPlayerId, playerOrder: game.playerOrder });
 };
