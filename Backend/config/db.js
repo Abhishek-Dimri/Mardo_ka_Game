@@ -7,10 +7,7 @@ const connectDB = async () => {
         process.exit(1);
     }
     try {
-        await mongoose.connect(uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+        await mongoose.connect(uri); // No options needed for Mongoose 6+
         console.log('✅ MongoDB connected');
     } catch (err) {
         console.error('❌ MongoDB connection error:', err.message);
@@ -19,3 +16,4 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
+
