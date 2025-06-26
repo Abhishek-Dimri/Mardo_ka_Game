@@ -5,7 +5,7 @@ const router = express.Router();
 const gameController = require('../controllers/gameController');
 
 router.post('/create', gameController.createGame);
-// router.post('/join', gameController.joinGame);
+router.post('/join', gameController.joinGame);
 // router.post('/start', gameController.startGame);
 // router.get('/state/:gameId', gameController.getGameState);
 // router.post('/leave', gameController.leaveGame);
