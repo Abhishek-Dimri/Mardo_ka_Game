@@ -8,7 +8,8 @@ const PlayerSchema = new mongoose.Schema({
   isInJail: { type: Boolean, default: false },
   isVacation: { type: Boolean, default: false }, // Skip one turn if landed on vacation
   color: { type: String, required:true }, // Unique player color for board UI
-  gameId: { type: mongoose.Schema.Types.ObjectId, ref: 'Game', required: true }
+  gameId: { type: mongoose.Schema.Types.ObjectId, ref: 'Game', required: true },
+  properties: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Property' }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Player', PlayerSchema);

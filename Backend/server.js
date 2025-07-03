@@ -1,31 +1,43 @@
 const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 3000;
+const http = require('http');
+const cors = require('cors');
+const { Server } = require('socket.io');
 const routes = require('./routes');
 const connectDB = require('./config/db');
-const cors = require('cors')
+const dotenv = require('dotenv');
+dotenv.config();
 
-// Load environment variables from .env file
-require('dotenv').config();
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON
-app.use(express.json());
-
-// Connect to the database
+// Connect to MongoDB
 connectDB();
 
-// Use the routes defined in the routes directory
-app.use('/api', routes);
-
-// Middleware for CORS
+// Express Middlewares
+app.use(express.json());
 app.use(cors({
   origin: '*',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true
 }));
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+// REST API routes
+app.use('/api', routes);
+
+// Create HTTP server and Socket.IO instance
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
 });
 
+// Attach socket handlers
+require('./sockets')(io); 
+global.io = io;
+
+// Start the server
+server.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});

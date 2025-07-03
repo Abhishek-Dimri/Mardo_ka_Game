@@ -20,9 +20,9 @@ exports.createGame = async (req, res) => {
 
 exports.joinGame = async (req, res) => {
   try {
-    const { gameId, username, color } = req.body;
+    const { gameId, username, color, socketId } = req.body;
 
-    if (!gameId || !username || !color) {
+    if (!gameId || !username || !color || !socketId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -32,25 +32,21 @@ exports.joinGame = async (req, res) => {
 
     const existingPlayers = await Player.find({ gameId });
 
-    // Username + color must be unique in room
     const isNameTaken = existingPlayers.some(p => p.username === username);
     const isColorTaken = existingPlayers.some(p => p.color === color);
-    if (isNameTaken) return res.status(409).json({ error: 'Username already taken in this game' });
-    if (isColorTaken) return res.status(409).json({ error: 'Color already taken in this game' });
+    if (isNameTaken) return res.status(409).json({ error: 'Username already taken' });
+    if (isColorTaken) return res.status(409).json({ error: 'Color already taken' });
 
-    // Optional: limit to 6 players
-    if (existingPlayers.length >= 6) {
-      return res.status(403).json({ error: 'Game room is full' });
-    }
+    if (existingPlayers.length >= 6) return res.status(403).json({ error: 'Room full' });
 
-    // Create new player
     const newPlayer = await Player.create({
       username,
       color,
-      gameId
+      gameId,
+      socketId
     });
 
-    if(existingPlayers.length === 0){
+    if (existingPlayers.length === 0) {
       game.ownerId = newPlayer._id;
     }
 
@@ -58,11 +54,25 @@ exports.joinGame = async (req, res) => {
     game.playerOrder.push(newPlayer._id);
     await game.save();
 
+    // 🧠 Broadcast to all sockets in that game room
+    global.io.to(game._id.toString()).emit('playerJoined', {
+      player: {
+        username: newPlayer.username,
+        color: newPlayer.color,
+        playerId: newPlayer._id
+      },
+      gameId: game._id,
+      currentPlayers: [
+        ...existingPlayers.map(p => ({ username: p.username, color: p.color })),
+        { username: newPlayer.username, color: newPlayer.color }
+      ]
+    });
+
     return res.status(200).json({
       message: 'Joined game successfully',
       playerId: newPlayer._id,
       gameId: game._id,
-      gameOwner : game.ownerId
+      gameOwner: game.ownerId
     });
 
   } catch (err) {
@@ -70,6 +80,7 @@ exports.joinGame = async (req, res) => {
     return res.status(500).json({ error: 'Server error while joining game' });
   }
 };
+
 
 exports.startGame = async (req, res) => {
   const { gameId, playerId } = req.body;
