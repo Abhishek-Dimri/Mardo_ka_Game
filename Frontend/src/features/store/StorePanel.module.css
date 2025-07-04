@@ -1,0 +1,70 @@
+/* features/store/StorePanel.module.css */
+.storePanel {
+  background-color: #222;
+  color: #fff;
+  padding: 10px;
+  border-bottom: 1px solid #555;
+  font-size: 14px;
+}
+
+.storePanel h3,
+.storePanel h4 {
+  margin: 10px 0 5px;
+  color: #ffda6a;
+}
+
+.storePanel ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 10px;
+}
+
+.storePanel li {
+  margin-bottom: 6px;
+  padding: 4px 6px;
+  background-color: #333;
+  border-radius: 4px;
+}
+
+/* features/store/StorePanel.module.css */
+.storePanel {
+  background-color: #222;
+  color: #fff;
+  padding: 10px;
+  border-bottom: 1px solid #555;
+  font-size: 14px;
+}
+
+.storePanel h3,
+.storePanel h4 {
+  margin: 10px 0 5px;
+  color: #ffda6a;
+}
+
+.storePanel ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 10px;
+}
+
+.storePanel li {
+  margin-bottom: 6px;
+  padding: 4px 6px;
+  background-color: #333;
+  border-radius: 4px;
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itemRow button {
+  background-color: #0af;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: not-allowed; /* Buy disabled for now */
+}
