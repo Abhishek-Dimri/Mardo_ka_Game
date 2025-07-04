@@ -158,6 +158,8 @@ socket.on('getGameData', async (gameId, callback) => {
       game.currentTurnPlayerId = shuffled[0];
       await game.save();
 
+      console.log(`Game ${gameId} started with players:`, shuffled);
+
       io.to(gameId).emit('gameStarted', {
         currentTurnPlayerId: game.currentTurnPlayerId,
         playerOrder: shuffled

@@ -32,9 +32,9 @@ const TileDetailsModal = ({ tile, onClose }) => {
         <h2 className={styles.title}>{name} <span>({country})</span></h2>
 
         <div className={styles.section}>
-          <p><strong>Price:</strong> ${basePrice}</p>
-          <p><strong>Upgrade Cost (per level):</strong> ${upgradeCost}</p>
-          <p><strong>Hotel Cost:</strong> ${hotelCost}</p>
+          <p><strong>Price:</strong> ₹{basePrice}</p>
+          <p><strong>Upgrade Cost (per level):</strong> ₹{upgradeCost}</p>
+          <p><strong>Hotel Cost:</strong> ₹{hotelCost}</p>
         </div>
 
         <div className={styles.section}>
@@ -44,7 +44,7 @@ const TileDetailsModal = ({ tile, onClose }) => {
               {rentTiers.map((rent, idx) => (
                 <tr key={idx}>
                   <td>{rentLabels[idx]}</td>
-                  <td>${rent}</td>
+                  <td>₹{rent}</td>
                 </tr>
               ))}
             </tbody>

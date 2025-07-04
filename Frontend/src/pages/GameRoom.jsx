@@ -6,7 +6,7 @@ import ChatPanel from '../features/chat/ChatPanel'; // Placeholder
 import PlayerSidebar from '../features/player/PlayerSidebar'; // Placeholder
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { setGameInfo, setLobbyPlayers } from '../features/game/gameSlice';
+import { setGameInfo, setLobbyPlayers,setGameStarted } from '../features/game/gameSlice';
 import { useState, useEffect } from 'react';
 import socket from '../socket/socket';
 import StorePanel from '../features/store/StorePanel';
@@ -36,6 +36,19 @@ const GameRoom = () => {
             }
         });
     }, [gameId]);
+
+    useEffect(() => {
+    const handleGameStarted = (data) => {
+        dispatch(setGameStarted({
+        currentTurnPlayerId: data.currentTurnPlayerId,
+        playerOrder: data.playerOrder,
+        }));
+    };
+
+    socket.on('gameStarted', handleGameStarted);
+    return () => socket.off('gameStarted', handleGameStarted);
+    }, [dispatch]);
+
 
     if (loading) return <div>Loading game...</div>;
 

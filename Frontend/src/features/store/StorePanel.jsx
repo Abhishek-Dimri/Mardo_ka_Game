@@ -25,7 +25,7 @@ const StorePanel = () => {
     }
   }, [dispatch, gameStatus]);
 
-//   if (gameStatus !== 'active') return null; // ❌ hide if game isn't active
+  if (gameStatus !== 'active') return null; // ❌ hide if game isn't active
 
   return (
     <div className={styles.storePanel}>
