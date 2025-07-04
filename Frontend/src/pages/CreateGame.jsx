@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { setGameId } from '../features/game/gameSlice';
+import { setGameInfo } from '../features/game/gameSlice';
 import socket from '../socket/socket';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,8 +15,13 @@ const CreateGame = () => {
     socket.emit('createGame', {}, (response) => {
       setLoading(false);
       if (response.success) {
-        dispatch(setGameId(response.gameId));
-        navigate(`/join/${response.gameId}`); // SPA navigation
+        dispatch(setGameInfo({
+          gameId: response.gameId,
+          boardId: response.boardinfo._id,
+          board: response.boardinfo,
+          status: 'waiting'
+        }));
+        navigate(`/game/${response.gameId}`); // SPA navigation
       } else {
         alert(response.error);
       }

@@ -1,0 +1,41 @@
+.container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background: #f2f2f2;
+  overflow: hidden;
+  padding: 0,0,0,0;
+}
+
+/* Left Sidebar */
+.sidebarLeft {
+  width: 20%;
+  min-width: 240px;
+  background-color: #e0e0e0;
+  /* padding: 16px; */
+  box-sizing: border-box;
+  border-right: 2px solid #ccc;
+  overflow-y: auto;
+}
+
+/* Center (Game Board) */
+.center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* padding: 16px; */
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+/* Right Sidebar */
+.sidebarRight {
+  width: 20%;
+  min-width: 240px;
+  background-color: #e0e0e0;
+  /* padding: 16px; */
+  box-sizing: border-box;
+  border-left: 2px solid #ccc;
+  overflow-y: auto;
+}

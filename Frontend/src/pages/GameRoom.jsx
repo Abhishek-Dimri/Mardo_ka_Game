@@ -1,32 +1,52 @@
-import React, { useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import socket from '../socket/socket';
-import { initGameSocket } from '../features/game/gameSocket';
+import React, { use } from 'react';
+import GameLayout from '../layouts/GameLayout';
+import GameBoard from '../features/game/GameBoard';
+import JoinRoom from '../features/lobby/JoinRoom';
+import ChatPanel from '../features/chat/ChatPanel'; // Placeholder
+import PlayerSidebar from '../features/player/PlayerSidebar'; // Placeholder
+import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { setGameInfo , setLobbyPlayers} from '../features/game/gameSlice';
+import { useState, useEffect } from 'react';
+import socket from '../socket/socket'; 
+
 
 const GameRoom = () => {
-  const { gameId, status, currentTurnPlayerId } = useSelector(state => state.game);
-  const { playerId, gameOwner } = useSelector(state => state.player);
+
+    const { gameId } = useParams();
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!socket.connected) socket.connect();
-    initGameSocket();
-  }, []);
-
-  const handleStartGame = () => {
-    socket.emit('startGame', { gameId, playerId}, (res) => {
-      if (!res.success) alert(res.error);
+    socket.emit('getGameData', gameId, (response) => {
+      if (response.success) {
+        dispatch(setGameInfo({
+          gameId,
+          boardId: response.board._id,
+          board: response.board,
+          status: response.status,
+        }));
+        response.players.forEach(p => {
+            dispatch(setLobbyPlayers(p));
+        });
+        setLoading(false);
+      } else {
+        alert(response.error);
+      }
     });
-  };
+  }, [gameId]);
+
+  if (loading) return <div>Loading game...</div>;
 
   return (
-    <div>
-      <h2>Game Room</h2>
-      <p>Status: {status}</p>
-      <p>Your Turn: {playerId === currentTurnPlayerId ? 'Yes' : 'No'}</p>
-      {gameOwner && status === 'waiting' && (
-        <button onClick={handleStartGame}>Start Game</button>
-      )}
-    </div>
+    <>
+      <JoinRoom gameId={gameId} />
+      <GameLayout
+        left={<ChatPanel gameId={gameId} />}
+        center={<GameBoard />}
+        right={<PlayerSidebar />}
+      />
+    </>
   );
 };
 

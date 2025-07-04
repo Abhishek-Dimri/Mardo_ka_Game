@@ -3,6 +3,8 @@
 const Game = require('../../models/Game');
 const Board = require('../../models/Board');
 const Player = require('../../models/Player');
+const Tile = require('../../models/Tile');
+const Property = require('../../models/Property');
 
 module.exports = (io, socket) => {
   // CREATE GAME
@@ -18,10 +20,22 @@ module.exports = (io, socket) => {
 
       socket.join(game._id.toString());
 
+      const boardinfo = await Board.findById(game.boardId)
+        .populate({
+          path: 'tiles',
+          populate: {
+            path: 'propertyRef' // this will populate tile.propertyRef if it exists
+          }
+        })
+        .exec();
+
+
       callback({
         success: true,
         gameId: game._id,
-        joinLink: `https://your-frontend-url.com/join/${game._id}`
+        joinLink: `http://localhost:5173/join/${game._id}`,
+        boardId: board._id,
+        boardinfo
       });
 
     } catch (err) {
@@ -30,18 +44,44 @@ module.exports = (io, socket) => {
     }
   });
 
+// GET GAME DATA
+socket.on('getGameData', async (gameId, callback) => {
+  try {
+    const game = await Game.findById(gameId);
+    if (!game) return callback({ success: false, error: 'Game not found' });
 
-  // JOIN GAME
+    const players = await Player.find({ gameId });
+    const board = await Board.findById(game.boardId).populate({
+      path: 'tiles',
+      populate: { path: 'propertyRef' }
+    });
+
+    callback({
+      success: true,
+      board,
+      players: players.map(p => ({
+        playerId: p._id,
+        username: p.username,
+        color: p.color,
+        gameId: p.gameId
+      })),
+      ownerId: game.ownerId,
+      status: game.status,
+      playerOrder: game.playerOrder,
+      currentTurnPlayerId: game.currentTurnPlayerId,
+    });
+  } catch (err) {
+    console.error('getGameData error:', err);
+    callback({ success: false, error: 'Server error while fetching game' });
+  }
+});
+
+
+// JOIN GAME
   socket.on('joinGame', async ({ gameId, username, color }, callback) => {
     try {
-      if(!gameId) {
-        return callback({ success: false, error: 'Game ID is required' });
-      }
-      if (!username) {
-        return callback({ success: false, error: 'Username is required' });
-      }
-      if (!color) {
-        return callback({ success: false, error: 'Color is required' });
+      if (!gameId || !username || !color) {
+        return callback({ success: false, error: 'Missing required data' });
       }
 
       const game = await Game.findById(gameId);
@@ -61,14 +101,25 @@ module.exports = (io, socket) => {
         socketId: socket.id
       });
 
-      if (existingPlayers.length === 0) game.ownerId = player._id;
+      if (existingPlayers.length === 0) {
+        game.ownerId = player._id;
+      }
 
       game.playerOrder.push(player._id);
       await game.save();
 
       socket.join(gameId);
 
-      io.to(gameId).emit('playerJoined', {
+      // ✅ Send full player list to the new player only
+      socket.emit('existingPlayers', existingPlayers.map(p => ({
+        playerId: p._id,
+        username: p.username,
+        color: p.color,
+        gameId: p.gameId
+      })));
+
+      // ✅ Broadcast to others about the new player
+      socket.to(gameId).emit('playerJoined', {
         playerId: player._id,
         username,
         color,
@@ -86,6 +137,7 @@ module.exports = (io, socket) => {
       callback({ success: false, error: 'Server error while joining game' });
     }
   });
+
 
   // START GAME
   socket.on('startGame', async ({ gameId, playerId }, callback) => {

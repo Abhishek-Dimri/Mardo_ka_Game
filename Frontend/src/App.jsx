@@ -7,6 +7,7 @@ import GameRoom from './pages/GameRoom';
 
 import { useEffect } from 'react';
 import socket from './socket/socket';
+// import '/App.css'; // Global styles
 
 function App() {
   useEffect(() => {

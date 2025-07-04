@@ -16,18 +16,19 @@ module.exports = (io, socket) => {
 
       const chat = await ChatMessage.create({
         gameId,
-        playerId,
-        username: player.username,
-        message,
-        sentAt: new Date()
+        senderId: player._id,
+        messageText: message,
+        timestamp: new Date()
       });
 
       io.to(gameId).emit('newMessage', {
         username: player.username,
-        playerId,
-        message,
-        sentAt: chat.sentAt
+        playerId: player._id,
+        color: player.color,
+        message: message,
+        sentAt: chat.timestamp
       });
+
 
       callback({ success: true });
     } catch (err) {
@@ -39,8 +40,19 @@ module.exports = (io, socket) => {
   // 📥 GET CHAT HISTORY
   socket.on('getChatHistory', async ({ gameId }, callback) => {
     try {
-      const history = await ChatMessage.find({ gameId }).sort({ sentAt: 1 }).limit(100);
-      callback({ success: true, messages: history });
+      const history = await ChatMessage.find({ gameId }).sort({ timestamp: 1 }).limit(100)
+        .populate('senderId', 'username color'); // Add username & color
+
+      const formatted = history.map(msg => ({
+        playerId: msg.senderId._id,
+        username: msg.senderId.username,
+        color: msg.senderId.color,
+        message: msg.messageText,
+        sentAt: msg.timestamp
+      }));
+
+      callback({ success: true, messages: formatted });
+
     } catch (err) {
       console.error('❌ getChatHistory error:', err);
       callback({ success: false, error: 'Failed to load chat' });

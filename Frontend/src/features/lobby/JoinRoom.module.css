@@ -1,0 +1,52 @@
+/* File: /src/features/lobby/JoinRoom.module.css */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 300px;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  animation: fadeIn 0.2s ease-in;
+}
+
+.modal input[type="text"] {
+  width: 90%;
+  padding: 8px;
+  margin: 10px 0;
+}
+
+.modal input[type="color"] {
+  margin-left: 10px;
+}
+
+.modal button {
+  padding: 10px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  margin-top: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.modal button:hover {
+  background: #0056b3;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
