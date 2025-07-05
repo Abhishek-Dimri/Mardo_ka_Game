@@ -152,18 +152,23 @@ socket.on('getGameData', async (gameId, callback) => {
         return callback({ success: false, error: 'Minimum 2 players required' });
       }
 
-      const shuffled = players.map(p => p._id).sort(() => 0.5 - Math.random());
-      game.status = 'active';
-      game.playerOrder = shuffled;
-      game.currentTurnPlayerId = shuffled[0];
-      await game.save();
+      const shuffledPlayers = players.sort(() => 0.5 - Math.random());
 
-      console.log(`Game ${gameId} started with players:`, shuffled);
+      game.status = 'active';
+      game.playerOrder = shuffledPlayers.map(p => p._id);
+      game.currentTurnPlayerId = game.playerOrder[0];
+      await game.save();
 
       io.to(gameId).emit('gameStarted', {
         currentTurnPlayerId: game.currentTurnPlayerId,
-        playerOrder: shuffled
+        playerOrder: shuffledPlayers.map(p => ({
+          playerId: p._id,
+          username: p.username,
+          color: p.color,
+          gameId: p.gameId,
+        }))
       });
+
 
       callback({ success: true });
 
