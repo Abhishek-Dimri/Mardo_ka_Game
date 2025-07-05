@@ -36,39 +36,48 @@ const JoinRoom = ({ gameId }) => {
   }, [dispatch]);
 
 
-  const handleJoin = () => {
-    if (!username.trim()) {
-      return alert('Please enter a username');
+const handleJoin = () => {
+  if (!username.trim()) {
+    return alert('Please enter a username');
+  }
+
+  socket.emit('joinGame', { gameId, username, color }, (response) => {
+    if (response.success) {
+      // 🔐 Save data for auto-rejoin after refresh
+      localStorage.setItem('playerData', JSON.stringify({
+        gameId,
+        playerId: response.playerId,
+        username,
+        color,
+      }));
+
+      // ✅ Set Redux state
+      dispatch(setGameInfo({
+        gameId,
+        boardId,
+        board,
+        status: response.status || 'waiting',
+      }));
+
+      dispatch(setPlayerInfo({
+        playerId: response.playerId,
+        username,
+        color,
+        gameOwner: response.playerId === response.gameOwner,
+      }));
+
+      dispatch(setLobbyPlayers({
+        playerId: response.playerId,
+        username,
+        color,
+        gameId,
+      }));
+    } else {
+      alert(response.error);
     }
+  });
+};
 
-    socket.emit('joinGame', { gameId, username, color }, (response) => {
-      if (response.success) {
-        dispatch(setGameInfo({
-          gameId,
-          boardId,
-          board,
-          status: response.status || 'waiting',
-        }));
-
-        dispatch(setPlayerInfo({
-          playerId: response.playerId,
-          username,
-          color,
-          gameOwner: response.playerId === response.gameOwner,
-        }));
-        
-          // ✅ Add yourself to player list
-        dispatch(setLobbyPlayers({
-          playerId: response.playerId,
-          username,
-          color,
-          gameId,
-        }));
-      } else {
-        alert(response.error);
-      }
-    });
-  };
 
   // 🔁 Allow pressing Enter key
   const handleKeyDown = (e) => {
