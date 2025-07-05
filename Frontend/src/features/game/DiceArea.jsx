@@ -1,5 +1,90 @@
-const DiceArea = () => {
-  return <div>🎲 Dice will be shown here</div>;
+import React, { useState, useEffect, useRef } from "react";
+import dice1 from "../../assets/dice1.png";
+import dice2 from "../../assets/dice2.png";
+import dice3 from "../../assets/dice3.png";
+import dice4 from "../../assets/dice4.png";
+import dice5 from "../../assets/dice5.png";
+import dice6 from "../../assets/dice6.png";
+
+const DiceRollerImages = () => {
+  const [rolling, setRolling] = useState(false);
+  const [diceFaces, setDiceFaces] = useState([1, 1]);
+  const intervalRef = useRef(null);
+
+  const diceImages = {
+    1: dice1,
+    2: dice2,
+    3: dice3,
+    4: dice4,
+    5: dice5,
+    6: dice6,
+  };
+
+  const rollDice = () => {
+    if (rolling) return;
+    setRolling(true);
+  };
+
+  useEffect(() => {
+    if (rolling) {
+      // Start dice face animation (shuffle every 100ms)
+      intervalRef.current = setInterval(() => {
+        setDiceFaces([
+          Math.floor(Math.random() * 6) + 1,
+          Math.floor(Math.random() * 6) + 1,
+        ]);
+      }, 100);
+
+      // Stop animation and lock final result after 1s
+      const timeout = setTimeout(() => {
+        clearInterval(intervalRef.current);
+        setDiceFaces([
+          Math.floor(Math.random() * 6) + 1,
+          Math.floor(Math.random() * 6) + 1,
+        ]);
+        setRolling(false);
+      }, 1000);
+
+      return () => {
+        clearInterval(intervalRef.current);
+        clearTimeout(timeout);
+      };
+    }
+  }, [rolling]);
+
+  return (
+    <div style={{ textAlign: "center", fontFamily: "sans-serif" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "0px",
+          marginBottom: "20px",
+          backgroundColor: "#000",
+        }}
+      >
+        <img
+          src={diceImages[diceFaces[0]]}
+          alt={`Dice ${diceFaces[0]}`}
+          width={100}
+          height={100}
+        />
+        <img
+          src={diceImages[diceFaces[1]]}
+          alt={`Dice ${diceFaces[1]}`}
+          width={100}
+          height={100}
+        />
+      </div>
+      <button
+        onClick={rollDice}
+        disabled={rolling}
+        style={{ fontSize: "20px", padding: "10px 20px", cursor: "pointer" }}
+      >
+        {rolling ? "Rolling..." : "Roll Dice"}
+      </button>
+    </div>
+  );
 };
 
-export default DiceArea;
+export default DiceRollerImages;
