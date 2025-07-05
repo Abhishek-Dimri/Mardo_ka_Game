@@ -44,40 +44,40 @@ module.exports = (io, socket) => {
     }
   });
 
-// GET GAME DATA
-socket.on('getGameData', async (gameId, callback) => {
-  try {
-    const game = await Game.findById(gameId);
-    if (!game) return callback({ success: false, error: 'Game not found' });
+  // GET GAME DATA
+  socket.on('getGameData', async (gameId, callback) => {
+    try {
+      const game = await Game.findById(gameId);
+      if (!game) return callback({ success: false, error: 'Game not found' });
 
-    const players = await Player.find({ gameId });
-    const board = await Board.findById(game.boardId).populate({
-      path: 'tiles',
-      populate: { path: 'propertyRef' }
-    });
+      const players = await Player.find({ gameId });
+      const board = await Board.findById(game.boardId).populate({
+        path: 'tiles',
+        populate: { path: 'propertyRef' }
+      });
 
-    callback({
-      success: true,
-      board,
-      players: players.map(p => ({
-        playerId: p._id,
-        username: p.username,
-        color: p.color,
-        gameId: p.gameId
-      })),
-      ownerId: game.ownerId,
-      status: game.status,
-      playerOrder: game.playerOrder,
-      currentTurnPlayerId: game.currentTurnPlayerId,
-    });
-  } catch (err) {
-    console.error('getGameData error:', err);
-    callback({ success: false, error: 'Server error while fetching game' });
-  }
-});
+      callback({
+        success: true,
+        board,
+        players: players.map(p => ({
+          playerId: p._id,
+          username: p.username,
+          color: p.color,
+          gameId: p.gameId
+        })),
+        ownerId: game.ownerId,
+        status: game.status,
+        playerOrder: game.playerOrder,
+        currentTurnPlayerId: game.currentTurnPlayerId,
+      });
+    } catch (err) {
+      console.error('getGameData error:', err);
+      callback({ success: false, error: 'Server error while fetching game' });
+    }
+  });
 
 
-// JOIN GAME
+  // JOIN GAME
   socket.on('joinGame', async ({ gameId, username, color }, callback) => {
     try {
       if (!gameId || !username || !color) {
@@ -177,4 +177,42 @@ socket.on('getGameData', async (gameId, callback) => {
       callback({ success: false, error: 'Server error while starting game' });
     }
   });
+
+  // REJOIN GAME
+  socket.on('rejoinGame', async ({ gameId, playerId }, callback) => {
+    try {
+      if (!gameId || !playerId) {
+        return callback({ success: false, error: 'Missing gameId or playerId' });
+      }
+
+      const game = await Game.findById(gameId);
+      if (!game) {
+        return callback({ success: false, error: 'Game not found' });
+      }
+
+      const player = await Player.findOne({ _id: playerId, gameId });
+      if (!player) {
+        return callback({ success: false, error: 'Player not found in game' });
+      }
+
+      // Update socketId for live features like chat, movement, etc.
+      player.socketId = socket.id;
+      await player.save();
+
+      socket.join(gameId);
+
+      callback({
+        success: true,
+        gameOwner: game.ownerId,
+      });
+
+      // Optional: Broadcast to other players that this player is back online
+      // socket.to(gameId).emit('playerRejoined', { playerId: player._id });
+
+    } catch (err) {
+      console.error('❌ rejoinGame error:', err);
+      callback({ success: false, error: 'Server error while rejoining game' });
+    }
+  });
+
 };
