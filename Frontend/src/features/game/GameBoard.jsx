@@ -1,16 +1,26 @@
-
+// GameBoard.js
+import React, { useRef } from 'react';
 import BoardLayout from '../../layouts/BoardLayout';
-import DiceArea from './DiceArea'; // Make a simple component or placeholder
-import ActionArea from './ActionArea'; // ActionArea
-import GameBoardContent from './GameBoardContent'; // Your original tile rendering
-import Logs from './Logs'; // Optional log area
+import ActionArea from './ActionArea';
+import GameBoardContent from './GameBoardContent';
+import Logs from './Logs';
+import DiceRollerImages from '../dice/DiceRollerImages';
 
 const GameBoard = () => {
+  const diceRef = useRef();
+
+  const handleRollDice = () => {
+    if (diceRef.current) {
+      diceRef.current.rollDice();
+    }
+  };
+
+  const rolling = diceRef.current?.rolling ?? false;
 
   return (
     <BoardLayout
-      diceArea={<DiceArea />}
-      actionArea={<ActionArea />}
+      diceArea={<DiceRollerImages ref={diceRef} />}
+      actionArea={<ActionArea onRollDice={handleRollDice} rolling={rolling} />}
       gameBoard={<GameBoardContent />}
       logs={<Logs />}
     />
