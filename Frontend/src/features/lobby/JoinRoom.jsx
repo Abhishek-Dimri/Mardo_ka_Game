@@ -5,6 +5,15 @@ import { setPlayerInfo } from '../player/playerSlice';
 import socket from '../../socket/socket';
 import styles from './JoinRoom.module.css';
 
+const colorOptions = [
+  { name: 'Red', value: '#ff4d4f' },
+  { name: 'Blue', value: '#1890ff' },
+  { name: 'Green', value: '#52c41a' },
+  { name: 'Yellow', value: '#fadb14' },
+  { name: 'Purple', value: '#722ed1' },
+  { name: 'Orange', value: '#fa8c16' },
+];
+
 const JoinRoom = ({ gameId }) => {
   const dispatch = useDispatch();
   const player = useSelector((state) => state.player);
@@ -12,79 +21,74 @@ const JoinRoom = ({ gameId }) => {
   const boardId = useSelector((state) => state.game.boardId);
 
   const [username, setUsername] = useState('');
-  const [color, setColor] = useState('#ff0000');
+  const [color, setColor] = useState('');
+  const [showColors, setShowColors] = useState(false);
 
-  // 🔁 Listen for playerJoined globally (others joining)
   useEffect(() => {
     const handlePlayerJoined = (data) => {
-      dispatch(setLobbyPlayers(data)); // full player info
+      dispatch(setLobbyPlayers(data));
     };
-
     socket.on('playerJoined', handlePlayerJoined);
     return () => socket.off('playerJoined', handlePlayerJoined);
   }, [dispatch]);
 
   useEffect(() => {
     const handleExistingPlayers = (players) => {
-      players.forEach(p => {
+      players.forEach((p) => {
         dispatch(setLobbyPlayers(p));
       });
     };
-
     socket.on('existingPlayers', handleExistingPlayers);
     return () => socket.off('existingPlayers', handleExistingPlayers);
   }, [dispatch]);
 
+  const handleJoin = () => {
+    if (!username.trim()) return alert('Please enter a username');
+    if (!color) return alert('Please choose a color');
 
-const handleJoin = () => {
-  if (!username.trim()) {
-    return alert('Please enter a username');
-  }
+    socket.emit('joinGame', { gameId, username, color }, (response) => {
+      if (response.success) {
+        localStorage.setItem(
+          'playerData',
+          JSON.stringify({
+            gameId,
+            playerId: response.playerId,
+            username,
+            color,
+          })
+        );
 
-  socket.emit('joinGame', { gameId, username, color }, (response) => {
-    if (response.success) {
-      // 🔐 Save data for auto-rejoin after refresh
-      localStorage.setItem('playerData', JSON.stringify({
-        gameId,
-        playerId: response.playerId,
-        username,
-        color,
-      }));
+        dispatch(setGameInfo({
+          gameId,
+          boardId,
+          board,
+          status: response.status || 'waiting',
+        }));
 
-      // ✅ Set Redux state
-      dispatch(setGameInfo({
-        gameId,
-        boardId,
-        board,
-        status: response.status || 'waiting',
-      }));
+        dispatch(setPlayerInfo({
+          playerId: response.playerId,
+          username,
+          color,
+          gameOwner: response.playerId === response.gameOwner,
+        }));
 
-      dispatch(setPlayerInfo({
-        playerId: response.playerId,
-        username,
-        color,
-        gameOwner: response.playerId === response.gameOwner,
-      }));
+        dispatch(setLobbyPlayers({
+          playerId: response.playerId,
+          username,
+          color,
+          gameId,
+        }));
+      } else {
+        alert(response.error);
+      }
+    });
+  };
 
-      dispatch(setLobbyPlayers({
-        playerId: response.playerId,
-        username,
-        color,
-        gameId,
-      }));
-    } else {
-      alert(response.error);
-    }
-  });
-};
-
-
-  // 🔁 Allow pressing Enter key
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleJoin();
   };
 
-  if (player.playerId) return null; // ✅ Already joined
+  if (player.playerId) return null;
 
   return (
     <div className={styles.overlay}>
@@ -96,16 +100,31 @@ const handleJoin = () => {
           placeholder="Enter your name"
           onChange={(e) => setUsername(e.target.value)}
           onKeyDown={handleKeyDown}
+          className={styles.input}
         />
-        <label>
-          Pick Color:
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-          />
-        </label>
-        <button onClick={handleJoin}>Join</button>
+
+        <div className={styles.colorLabel}>Choose Color:</div>
+        <div className={styles.colorGrid}>
+          {colorOptions.map(({ name, value }) => (
+            <button
+              key={name}
+              className={`${styles.colorButton} ${color === value ? styles.selected : ''}`}
+              style={{ backgroundColor: value }}
+              onClick={() => setColor(value)}
+              title={name}
+            />
+          ))}
+        </div>
+
+        {color && (
+          <div className={styles.selectedPreview}>
+            Selected Color: <span style={{ color }}>{color}</span>
+          </div>
+        )}
+
+        <button className={styles.joinButton} onClick={handleJoin}>
+          Join
+        </button>
       </div>
     </div>
   );
