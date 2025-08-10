@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import socket from '../../socket/socket';
 import { setChatHistory, addChatMessage } from './chatSlice';
 import styles from './ChatPanel.module.css'; // Optional: style later
 
-const ChatPanel = ({ gameId }) => {
+const ChatPanel = React.memo(({ gameId }) => {
   const dispatch = useDispatch();
   const messages = useSelector(state => state.chat.messages);
   const player = useSelector(state => state.player);
@@ -34,7 +34,7 @@ const ChatPanel = ({ gameId }) => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = () => {
+  const sendMessage = useCallback(() => {
     if (!message.trim()) return;
 
     socket.emit('sendMessage', {
@@ -48,11 +48,11 @@ const ChatPanel = ({ gameId }) => {
     });
 
     setMessage('');
-  };
+  }, [message, gameId, player.playerId, dispatch]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') sendMessage();
-  };
+  }, [sendMessage]);
 
   return (
     <div className={styles.chatWrapper}>
@@ -77,6 +77,6 @@ const ChatPanel = ({ gameId }) => {
       </div>
     </div>
   );
-};
+});
 
 export default ChatPanel;

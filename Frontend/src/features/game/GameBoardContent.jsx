@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styles from './GameBoardContent.module.css';
 import { useDispatch, useSelector } from 'react-redux';
 import TileDetailsModal from '../../components/TileDetailsModal/TileDetailsModal';
-import JoinRoom from '../lobby/JoinRoom';
-import StartGameBar from './StartGameBar';
 
 const GameBoardContent = () => {
   const [x, setX] = useState(0);
@@ -22,62 +20,36 @@ const GameBoardContent = () => {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  const getTileClass = (index) => {
-    if ([0, 11, 22, 33].includes(index)) return styles.cornerTile;
-    return styles.edgeTile;
-  };
+  const getTileClass = useCallback((index) => (
+    [0, 11, 22, 33].includes(index) ? styles.cornerTile : styles.edgeTile
+  ), []);
 
-  const getTilePosition = (index) => {
+  const positionCache = useMemo(() => new Map(), [x]);
+  const getTilePosition = useCallback((index) => {
+    if (positionCache.has(index)) return positionCache.get(index);
     const px = (val) => `${val}px`;
     const cornerSize = 1.5 * x;
     const edgeSize = x;
-
-    if (index === 0) return { top: 0, left: 0 }; // Top-left
-    if (index === 11) return { top: 0, left: px(cornerSize + 10 * edgeSize) }; // Top-right
-    if (index === 22) return { top: px(cornerSize + 10 * edgeSize), left: px(cornerSize + 10 * edgeSize) }; // Bottom-right
-    if (index === 33) return { top: px(cornerSize + 10 * edgeSize), left: 0 }; // Bottom-left
-
-    if (index > 0 && index < 11) {
-      return {
-        top: 0,
-        left: px(cornerSize + (index - 1) * edgeSize),
-      };
-    }
-
-    if (index > 11 && index < 22) {
-      return {
-        top: px(cornerSize + (index - 12) * edgeSize),
-        left: px(cornerSize + 10 * edgeSize + 1.5 * x),
-        transform: 'rotate(90deg)',
-        transformOrigin: 'top left',
-      };
-    }
-
-    if (index > 22 && index < 33) {
-      return {
-        top: px(cornerSize + 10 * edgeSize),
-        left: px(cornerSize + (32 - index) * edgeSize),
-      };
-    }
-
-    if (index > 33 && index < 44) {
-      return {
-        top: px(cornerSize + (43 - index) * edgeSize),
-        left: 1.5 * x,
-        transform: 'rotate(90deg)',
-        transformOrigin: 'top left',
-      };
-    }
-
-    return {};
-  };
+    let val;
+    if (index === 0) val = { top: 0, left: 0 };
+    else if (index === 11) val = { top: 0, left: px(cornerSize + 10 * edgeSize) };
+    else if (index === 22) val = { top: px(cornerSize + 10 * edgeSize), left: px(cornerSize + 10 * edgeSize) };
+    else if (index === 33) val = { top: px(cornerSize + 10 * edgeSize), left: 0 };
+    else if (index > 0 && index < 11) val = { top: 0, left: px(cornerSize + (index - 1) * edgeSize) };
+    else if (index > 11 && index < 22) val = { top: px(cornerSize + (index - 12) * edgeSize), left: px(cornerSize + 10 * edgeSize + 1.5 * x), transform: 'rotate(90deg)', transformOrigin: 'top left' };
+    else if (index > 22 && index < 33) val = { top: px(cornerSize + 10 * edgeSize), left: px(cornerSize + (32 - index) * edgeSize) };
+    else if (index > 33 && index < 44) val = { top: px(cornerSize + (43 - index) * edgeSize), left: 1.5 * x, transform: 'rotate(90deg)', transformOrigin: 'top left' };
+    else val = {};
+    positionCache.set(index, val);
+    return val;
+  }, [x, positionCache]);
 
   const boardSize = x * 13;
 
   return (
     <>
     <div className={styles.board} style={{ width: boardSize, height: boardSize }}>
-      {game.board.tiles?.map((tile, idx) => (
+  {game.board?.tiles?.map((tile, idx) => (
         <div
           key={tile._id}
           onClick={() => {

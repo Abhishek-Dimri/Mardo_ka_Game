@@ -1,13 +1,14 @@
+// StartGameBar.jsx
 import React from 'react';
 import { useSelector } from 'react-redux';
-import socket from '../../socket/socket';
+import { emitStartGame } from './gameEvents'; // re-exported from socket/events
 
 const StartGameBar = () => {
   const game = useSelector((state) => state.game);
   const player = useSelector((state) => state.player);
 
   const handleStartGame = () => {
-    socket.emit('startGame', { gameId: game.gameId, playerId: player.playerId }, (res) => {
+    emitStartGame({ gameId: game.gameId, playerId: player.playerId }, (res) => {
       if (!res.success) alert(res.error);
     });
   };

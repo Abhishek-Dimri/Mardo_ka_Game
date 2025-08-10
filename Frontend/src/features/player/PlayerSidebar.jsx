@@ -1,7 +1,8 @@
-import { useSelector } from 'react-redux';
+import { useSelector, shallowEqual } from 'react-redux';
+import React from 'react';
 
-const PlayerSidebar = () => {
-  const players = useSelector(state => state.game.playerOrder || []);
+const PlayerSidebar = React.memo(() => {
+  const players = useSelector(state => state.game.playerOrder, shallowEqual) || [];
 
   return (
     <div>
@@ -15,6 +16,6 @@ const PlayerSidebar = () => {
       </ul>
     </div>
   );
-};
+});
 
 export default PlayerSidebar;

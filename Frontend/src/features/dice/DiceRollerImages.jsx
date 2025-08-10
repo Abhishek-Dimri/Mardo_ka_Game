@@ -1,5 +1,8 @@
 // DiceRollerImages.js
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { addLog } from '../game/gameSlice';
+import socket from '../../socket/socket';
 import dice1 from "../../assets/dice1.png";
 import dice2 from "../../assets/dice2.png";
 import dice3 from "../../assets/dice3.png";
@@ -11,6 +14,7 @@ const DiceRollerImages = forwardRef((props, ref) => {
   const [rolling, setRolling] = useState(false);
   const [diceFaces, setDiceFaces] = useState([1, 1]);
   const intervalRef = useRef(null);
+  const dispatch = useDispatch();
 
   const diceImages = {
     1: dice1,
@@ -42,11 +46,13 @@ const DiceRollerImages = forwardRef((props, ref) => {
 
       const timeout = setTimeout(() => {
         clearInterval(intervalRef.current);
-        setDiceFaces([
+        const finalFaces = [
           Math.floor(Math.random() * 6) + 1,
           Math.floor(Math.random() * 6) + 1,
-        ]);
+        ];
+        setDiceFaces(finalFaces);
         setRolling(false);
+        dispatch(addLog({ message: `Rolled ${finalFaces[0]} and ${finalFaces[1]}` }));
       }, 1000);
 
       return () => {
@@ -55,6 +61,16 @@ const DiceRollerImages = forwardRef((props, ref) => {
       };
     }
   }, [rolling]);
+
+  // Listen for server diceRolled to sync final outcome
+  useEffect(() => {
+    const onDiceRolled = ({ playerId, diceValue }) => {
+      // Show the server diceValue as first die (simple); could support 2 dice later
+      setDiceFaces([diceValue, Math.max(1, Math.min(6, diceValue))]);
+    };
+    socket.on('diceRolled', onDiceRolled);
+    return () => socket.off('diceRolled', onDiceRolled);
+  }, []);
 
   return (
     <div style={{ textAlign: "center" }}>

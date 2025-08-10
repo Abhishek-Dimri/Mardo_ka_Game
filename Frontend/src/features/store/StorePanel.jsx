@@ -1,8 +1,7 @@
-// features/store/StorePanel.jsx
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setStoreItems } from './storeSlice';
-import socket from '../../socket/socket';
+import { emitGetStoreItems } from '../../socket/events/storeEvents';
 import styles from './StorePanel.module.css';
 
 const StorePanel = () => {
@@ -12,7 +11,7 @@ const StorePanel = () => {
 
   useEffect(() => {
     if (gameStatus === 'active') {
-      socket.emit('getStoreItems', null, (res) => {
+      emitGetStoreItems((res) => {
         if (res.success) {
           dispatch(setStoreItems({
             bombs: res.store.bombs,
@@ -25,7 +24,7 @@ const StorePanel = () => {
     }
   }, [dispatch, gameStatus]);
 
-  if (gameStatus !== 'active') return null; // ❌ hide if game isn't active
+  if (gameStatus !== 'active') return null;
 
   return (
     <div className={styles.storePanel}>

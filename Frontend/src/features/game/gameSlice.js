@@ -8,6 +8,7 @@ const initialState = {
   playerOrder: [],
   status: 'waiting',
   currentTurnPlayerId: null,
+  logs: [], // simple client-side log list
 };
 
 const gameSlice = createSlice({
@@ -31,11 +32,28 @@ const gameSlice = createSlice({
 
     setGameStarted: (state, action) => {
       state.status = 'active';
-      state.playerOrder = action.payload.playerOrder;
-      state.currentTurnPlayerId = action.payload.currentTurnPlayerId;
+      if (action.payload.playerOrder && action.payload.playerOrder.length) {
+        state.playerOrder = action.payload.playerOrder;
+      }
+      if (action.payload.currentTurnPlayerId) {
+        state.currentTurnPlayerId = action.payload.currentTurnPlayerId;
+      }
+    },
+    addLog: (state, action) => {
+      // Expect payload { message, type?, timestamp?, ...rest }
+      const entry = {
+        id: Date.now() + Math.random().toString(36).slice(2),
+        timestamp: Date.now(),
+        ...action.payload,
+      };
+      state.logs.unshift(entry); // newest first
+      if (state.logs.length > 200) state.logs.length = 200; // cap
+    },
+    clearLogs: (state) => {
+      state.logs = [];
     },
   },
 });
 
-export const { setGameInfo, setGameStarted ,setLobbyPlayers } = gameSlice.actions;
+export const { setGameInfo, setGameStarted ,setLobbyPlayers, addLog, clearLogs } = gameSlice.actions;
 export default gameSlice.reducer;
